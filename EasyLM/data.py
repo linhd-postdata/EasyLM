@@ -1,5 +1,6 @@
 import dataclasses
 import pprint
+import os
 import time
 from functools import partial
 import json
@@ -14,9 +15,16 @@ import numpy as np
 
 from datasets import load_dataset
 
+OSCAR_BASE_URL = "https://huggingface.co/datasets/oscar-corpus/OSCAR-2301/resolve/main/es_meta"
+OSCAR_DATA_FILES = {
+        'train': [f"{OSCAR_BASE_URL}/es_meta_part_{x}.jsonl.zst" for x in range(1,292)],
+        'eval': [f"{OSCAR_BASE_URL}/es_meta_part_292.jsonl.zst"]
+}
+AUTH_TOKEN = os.getenv("HF_TOKEN", default=None)
+
 
 class DatasetFactory(object):
-    """ Datset builder class. """
+    """ Dataset builder class. """
 
     @staticmethod
     def get_default_config(updates=None):
@@ -145,9 +153,27 @@ class HuggingfaceDataset(object):
         split = self.config.split if self.config.split != '' else None
         self._tokenizer = tokenizer
         self._text_processor = text_processor
-        self._dataset = load_dataset(
-            self.config.path, name, split=split, streaming=self.config.streaming
-        )
+
+        if name == "oscar_es_train":
+            self._dataset = load_dataset(
+                "oscar-corpus/OSCAR-2301",
+                data_files=OSCAR_DATA_FILES['train'],
+                streaming=True,
+                language="es",
+                use_auth_token=AUTH_TOKEN,
+            )
+        elif name == "oscar_es_val":
+            self._dataset = load_dataset(
+                "oscar-corpus/OSCAR-2301",
+                data_files=OSCAR_DATA_FILES['eval'],
+                streaming=True,
+                language="es",
+                use_auth_token=AUTH_TOKEN,
+            )
+        else:
+            self._dataset = load_dataset(
+                self.config.path, name, split=split, streaming=self.config.streaming
+            )
 
     def __iter__(self):
         chunk_size = self.config.batch_size * self.config.seq_length

@@ -5,6 +5,8 @@ from tqdm import tqdm, trange
 import numpy as np
 import mlxu
 
+from datasets import load_dataset, IterableDatasetDict
+
 import jax
 import jax.numpy as jnp
 from jax.experimental.pjit import pjit
@@ -23,7 +25,6 @@ from EasyLM.jax_utils import (
 from EasyLM.models.llama.llama_model import (
     LLaMAConfig, FlaxLLaMAForCausalLMModule
 )
-
 
 FLAGS, FLAGS_DEF = mlxu.define_flags_with_default(
     seed=42,
